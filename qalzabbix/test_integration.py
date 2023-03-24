@@ -25,7 +25,7 @@ class TestGetMeasurement(unittest.TestCase):
         self.client.disconnect()
 
     def test_get_authorized_consumption_power_active(self):
-        measurement = "urn:dev:org:32473-elfe:A019_puissance"
+        measurement = "urn:dev:org:60060-elfe:A019_puissance"
         end_time = dt.datetime.now(dt.timezone.utc).astimezone() - dt.timedelta(days=1)
         start_time = end_time - dt.timedelta(minutes=60)
         data = self.client.get_history(self.proxy, measurement, start_time, end_time)

@@ -46,7 +46,7 @@ class ZabbixItemResolverConsometers(ZabbixItemResolver):
     resource.
     """
 
-    IDENTIFIER_REGEX = re.compile(r"^urn:dev:org:32473-.*:(\w+)$")
+    IDENTIFIER_REGEX = re.compile(r"^urn:dev:org:60060-.*:(\w+)$")
 
     def __init__(self, zabbix_api: ZabbixAPI):
         self.zabbix_api = zabbix_api
@@ -102,7 +102,7 @@ class GetZabbixHistoryHandler(GetHistoryHandler):
         self.zabbix_resolver = zabbix_resolver
 
     def default_identifier(self) -> str:
-        return "urn:dev:org:32473-elfe:C013_batterie"
+        return "urn:dev:org:60060-elfe:C013_batterie"
 
     def get_history(self, client, identifier, start_time, end_time):
 
