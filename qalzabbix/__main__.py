@@ -21,6 +21,7 @@ class ZabbixItemInfo:
     id: int
     key: str
     unit: str
+    value_type: int
 
 
 class ZabbixItemResolver(ABC):
@@ -50,7 +51,7 @@ class ZabbixItemResolverConsometers(ZabbixItemResolver):
 
     def __init__(self, zabbix_api: ZabbixAPI):
         self.zabbix_api = zabbix_api
-        self.item_from_key: Mapping[str, ZabbixItemInfo] = {}
+        self.item_from_id: Mapping[str, ZabbixItemInfo] = {}
 
     def resolve(self, urn_identifier: str) -> Tuple[ZabbixAPI, ZabbixItemInfo]:
 
@@ -58,28 +59,29 @@ class ZabbixItemResolverConsometers(ZabbixItemResolver):
         if not m:
             raise ValueError(f"{urn_identifier} identifier is not supported")
 
-        item_key = m.group(1)
+        item_id = m.group(1)
         # FIXME handle renamings, resolve periodically?
-        if item_key not in self.item_from_key:
+        if item_id not in self.item_from_id:
             self.update_mapping()
 
-        item_info = self.item_from_key.get(item_key)
+        item_info = self.item_from_id.get(item_id)
 
         if item_info is None:
-            raise ValueError(f"Item with key {item_key} not found")
+            raise ValueError(f"Item with id {item_id} not found")
 
         return self.zabbix_api, item_info
 
     def update_mapping(self):
-        self.item_from_key.clear()
+        self.item_from_id.clear()
         items = self.zabbix_api.item.get()
         for item in items:
-            key = item["key_"]
-            if "_" in key and "[" not in key:
-                item_info = ZabbixItemInfo(
-                    id=item["itemid"], key=key, unit=item["units"]
-                )
-                self.item_from_key[key] = item_info
+            item_info = ZabbixItemInfo(
+                id=item["itemid"],
+                key=item["key_"],
+                unit=item["units"],
+                value_type=item["value_type"],
+            )
+            self.item_from_id[item_info.id] = item_info
 
 
 def datetime_to_zabbix(date):
@@ -102,7 +104,7 @@ class GetZabbixHistoryHandler(GetHistoryHandler):
         self.zabbix_resolver = zabbix_resolver
 
     def default_identifier(self) -> str:
-        return "urn:dev:org:60060-elfe:C013_batterie"
+        return "urn:dev:org:60060-elfe:42878"
 
     def get_history(self, client, identifier, start_time, end_time):
 
@@ -120,7 +122,7 @@ class GetZabbixHistoryHandler(GetHistoryHandler):
                 time_till=int(datetime_to_zabbix(end_time_limited)),
                 output="extend",
                 limit=self.MAX_RECORDS + 1,
-                history=0,
+                history=requested_item.value_type,
             )
 
             start_time = end_time_limited

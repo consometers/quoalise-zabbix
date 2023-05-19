@@ -25,12 +25,20 @@ class TestGetMeasurement(unittest.TestCase):
         self.client.disconnect()
 
     def test_get_authorized_consumption_power_active(self):
-        measurement = "urn:dev:org:60060-elfe:A019_puissance"
+        measurement = "urn:dev:org:60060-elfe:42878"
         end_time = dt.datetime.now(dt.timezone.utc).astimezone() - dt.timedelta(days=1)
         start_time = end_time - dt.timedelta(minutes=60)
         data = self.client.get_history(self.proxy, measurement, start_time, end_time)
         records = list(data.records)
-        print(records)
+        self.assertGreaterEqual(len(records), 0)
+        self.assertEqual(records[0].name, measurement)
+
+    def test_get_int(self):
+        measurement = "urn:dev:org:60060-elfe:44535"
+        end_time = dt.datetime.now(dt.timezone.utc).astimezone() - dt.timedelta(days=1)
+        start_time = end_time - dt.timedelta(minutes=60)
+        data = self.client.get_history(self.proxy, measurement, start_time, end_time)
+        records = list(data.records)
         self.assertGreaterEqual(len(records), 0)
         self.assertEqual(records[0].name, measurement)
 
