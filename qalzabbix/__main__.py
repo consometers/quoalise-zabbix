@@ -99,14 +99,18 @@ class GetZabbixHistoryHandler(GetHistoryHandler):
 
     MAX_RECORDS = 5000
 
-    def __init__(self, zabbix_resolver: ZabbixItemResolver):
+    def __init__(self, zabbix_resolver: ZabbixItemResolver, allowed_clients: List[str]):
         super().__init__()
         self.zabbix_resolver = zabbix_resolver
+        self.allowed_clients = allowed_clients
 
     def default_identifier(self) -> str:
         return "urn:dev:org:60060-elfe:42878"
 
     def get_history(self, client, identifier, start_time, end_time):
+
+        if client.bare not in self.allowed_clients:
+            raise PermissionError(f"{client.bare} is not in allow list")
 
         zabbix_api, requested_item = self.zabbix_resolver.resolve(identifier)
 
@@ -159,12 +163,14 @@ async def main(conf):
     zabbix_api = ZabbixAPI(conf["zabbix"]["url"])
     zabbix_api.login(conf["zabbix"]["login"], conf["zabbix"]["password"])
 
+    allowed_clients = set(conf["allowed_clients"])
+
     zabbix_resolver = ZabbixItemResolverConsometers(zabbix_api)
 
     server = await ServerAsync.connect(
         conf["xmpp"]["full_jid"], conf["xmpp"]["password"]
     )
-    get_zabbix_history = GetZabbixHistoryHandler(zabbix_resolver)
+    get_zabbix_history = GetZabbixHistoryHandler(zabbix_resolver, allowed_clients)
     server.add_handler(get_zabbix_history)
 
 
